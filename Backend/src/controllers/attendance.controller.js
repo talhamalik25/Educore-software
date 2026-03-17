@@ -1,5 +1,6 @@
 const Attendance = require('../models/attendance.model');
 const Student = require('../models/student.model');
+const Notification = require('../models/notification.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 // @desc    Mark attendance for a student
@@ -55,6 +56,40 @@ const markBulkAttendance = async (req, res) => {
 
         // insertMany with ordered:false to skip duplicates
         const result = await Attendance.insertMany(attendanceData, { ordered: false });
+
+        // Create SMS notification stubs for absent/late
+        const flagged = (records || []).filter((r) => r?.status === 'absent' || r?.status === 'late');
+        if (flagged.length > 0) {
+            const flaggedIds = flagged.map((r) => r.studentId);
+            const students = await Student.find(
+                { _id: { $in: flaggedIds }, schoolId: req.user.schoolId },
+                'name parentPhone'
+            );
+
+            const studentById = new Map(students.map((s) => [String(s._id), s]));
+            const notifications = flagged.map((r) => {
+                const s = studentById.get(String(r.studentId));
+                const parentPhone = s?.parentPhone;
+                const type = r.status === 'absent' ? 'attendance_absent' : 'attendance_late';
+                const message = r.status === 'absent'
+                    ? `Attendance alert: ${s?.name || 'Student'} marked absent on ${date}.`
+                    : `Attendance alert: ${s?.name || 'Student'} marked late on ${date}.`;
+
+                // eslint-disable-next-line no-console
+                console.log(`[SMS-STUB] ${type} → ${parentPhone || 'N/A'}: ${message}`);
+
+                return {
+                    schoolId: req.user.schoolId,
+                    studentId: r.studentId,
+                    parentPhone,
+                    type,
+                    message,
+                    status: 'pending',
+                };
+            });
+
+            await Notification.insertMany(notifications);
+        }
 
         return sendSuccess(res, 201, `${result.length} attendance records saved`, { count: result.length });
     } catch (error) {

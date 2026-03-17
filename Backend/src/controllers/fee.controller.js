@@ -1,5 +1,6 @@
 const Fee = require('../models/fee.model');
 const Student = require('../models/student.model');
+const Notification = require('../models/notification.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 // @desc    Create fee record for a student
@@ -75,6 +76,28 @@ const markFeePaid = async (req, res) => {
 
         // Update student feeStatus
         await Student.findByIdAndUpdate(fee.studentId, { feeStatus: 'paid' });
+
+        // Create SMS notification stub
+        const student = await Student.findOne(
+            { _id: fee.studentId, schoolId: req.user.schoolId },
+            'name parentPhone'
+        );
+        if (student) {
+            const parentPhone = student.parentPhone;
+            const message = `Fee received: PKR ${fee.amount} for ${student.name} (${fee.month}).`;
+
+            // eslint-disable-next-line no-console
+            console.log(`[SMS-STUB] fee_received → ${parentPhone || 'N/A'}: ${message}`);
+
+            await Notification.create({
+                schoolId: req.user.schoolId,
+                studentId: student._id,
+                parentPhone,
+                type: 'fee_received',
+                message,
+                status: 'pending',
+            });
+        }
 
         return sendSuccess(res, 200, 'Fee marked as paid', { fee });
     } catch (error) {
