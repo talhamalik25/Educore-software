@@ -95,9 +95,14 @@ const login = async (req, res) => {
 
 // @desc    Register a new school + its first admin (public onboarding)
 // @route   POST /api/auth/register-school
-// @access  Public
+// @access  Public (Secret required)
 const registerSchool = async (req, res) => {
     try {
+        const SUPERADMIN_SECRET = process.env.SUPERADMIN_SECRET;
+        if (req.body.superadminSecret !== SUPERADMIN_SECRET) {
+            return sendError(res, 403, 'Unauthorized. Contact EduCore support to register your school.');
+        }
+
         console.log('🚀 Registration started:', req.body.email);
         const {
             schoolName, schoolEmail, schoolPhone, schoolAddress, plan,

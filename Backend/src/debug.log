@@ -1,0 +1,6 @@
+[2026-03-23T11:59:19.845Z] 🔍 Login attempt for: superadmin@educore.test
+[2026-03-23T11:59:19.936Z] ✅ User found, checking password...
+[2026-03-23T11:59:20.304Z] 🔐 Password match result: true
+[2026-03-23T12:00:03.633Z] 🔍 Login attempt for: superadmin@educore.test
+[2026-03-23T12:00:03.728Z] ✅ User found, checking password...
+[2026-03-23T12:00:04.098Z] 🔐 Password match result: true

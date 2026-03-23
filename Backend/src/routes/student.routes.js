@@ -5,7 +5,7 @@ const protect = require('../middleware/protect');
 const requireRole = require('../middleware/requireRole');
 
 router.post('/',      protect, requireRole('admin'), createStudent);
-router.get('/',       protect, requireRole('admin', 'teacher'), getStudents);
+router.get('/',       protect, requireRole('admin', 'teacher', 'parent'), getStudents);
 router.get('/:id',    protect, requireRole('admin', 'teacher'), getStudent);
 router.put('/:id',    protect, requireRole('admin'), updateStudent);
 router.delete('/:id', protect, requireRole('admin'), deleteStudent);

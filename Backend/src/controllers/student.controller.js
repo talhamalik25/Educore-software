@@ -37,6 +37,11 @@ const getStudents = async (req, res) => {
     try {
         const filter = { schoolId: req.user.schoolId, isActive: true };
 
+        // If parent, only show their students
+        if (req.user.role === 'parent') {
+            filter.parentId = req.user._id;
+        }
+
         // Optional filter by class
         if (req.query.class) filter.class = req.query.class;
         if (req.query.section) filter.section = req.query.section;
