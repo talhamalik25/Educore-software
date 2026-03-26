@@ -1,4 +1,5 @@
 const User = require('../models/user.model');
+const Student = require('../models/student.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 // @desc    Create user (teacher/parent) under a school
@@ -21,6 +22,14 @@ const createUser = async (req, res) => {
             phone,
             role: role || 'teacher',
         });
+
+        // If parent, link to any existing students
+        if (user.role === 'parent' && user.phone) {
+            await Student.updateMany(
+                { parentPhone: user.phone, schoolId: req.user.schoolId },
+                { parentId: user._id }
+            );
+        }
 
         return sendSuccess(res, 201, 'User created successfully', {
             user: {
@@ -79,6 +88,14 @@ const updateUser = async (req, res) => {
         ).select('-password');
 
         if (!user) return sendError(res, 404, 'User not found.');
+
+        // If phone or role updated, re-sync students
+        if (user.role === 'parent' && user.phone) {
+            await Student.updateMany(
+                { parentPhone: user.phone, schoolId: req.user.schoolId },
+                { parentId: user._id }
+            );
+        }
         return sendSuccess(res, 200, 'User updated', { user });
     } catch (error) {
         return sendError(res, 500, error.message);

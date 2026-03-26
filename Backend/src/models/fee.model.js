@@ -23,7 +23,7 @@ const feeSchema = new mongoose.Schema({
         type: Date,
         required: true,
     },
-    paidDate: {
+    paidAt: {
         type: Date,
     },
     status: {

@@ -1,5 +1,6 @@
 const Notification = require('../models/notification.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+const sendSMS = require('../utils/sendSMS');
 
 // @desc    Get notifications for a school
 // @route   GET /api/notifications
@@ -29,12 +30,13 @@ const createNotification = async (req, res) => {
             parentPhone,
             type,
             message,
-            status: status || 'pending',
+            status: 'sent',
         });
 
-        // Stub behavior: log to console instead of SMS provider
-        // eslint-disable-next-line no-console
-        console.log(`[SMS-STUB] ${type} → ${parentPhone || 'N/A'}: ${message}`);
+        // Send actual SMS
+        if (parentPhone) {
+            sendSMS(parentPhone, message);
+        }
 
         return sendSuccess(res, 201, 'Notification created', { notification });
     } catch (error) {

@@ -21,6 +21,7 @@ const studentSchema = new mongoose.Schema({
     },
     section: {
         type: String,
+        required: [true, 'Section is required'],
     },
     dateOfBirth: {
         type: Date,
@@ -35,6 +36,8 @@ const studentSchema = new mongoose.Schema({
     },
     parentPhone: {
         type: String,
+        required: [true, 'Parent phone number is required'],
+        trim: true,
     },
     feeStatus: {
         type: String,

@@ -1,4 +1,5 @@
 const Student = require('../models/student.model');
+const User = require('../models/user.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 // @desc    Create student
@@ -13,6 +14,9 @@ const createStudent = async (req, res) => {
             return sendError(res, 400, 'Student with this roll number already exists.');
         }
 
+        // Find parent if exists
+        const parent = await User.findOne({ phone: parentPhone, role: 'parent' });
+
         const student = await Student.create({
             schoolId: req.user.schoolId,
             name,
@@ -22,6 +26,7 @@ const createStudent = async (req, res) => {
             dateOfBirth,
             gender,
             parentPhone,
+            parentId: parent ? parent._id : null,
         });
 
         return sendSuccess(res, 201, 'Student created successfully', { student });
@@ -74,6 +79,12 @@ const getStudent = async (req, res) => {
 // @access  Admin
 const updateStudent = async (req, res) => {
     try {
+        // If parentPhone is updated, try to re-link parentId
+        if (req.body.parentPhone) {
+            const parent = await User.findOne({ phone: req.body.parentPhone, role: 'parent' });
+            req.body.parentId = parent ? parent._id : null;
+        }
+
         const student = await Student.findOneAndUpdate(
             { _id: req.params.id, schoolId: req.user.schoolId },
             req.body,

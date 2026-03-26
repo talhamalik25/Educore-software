@@ -9,7 +9,14 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',');
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
 }));
 app.use(express.json());
@@ -24,6 +31,7 @@ app.use('/api/fees',        require('./routes/fee.routes'));
 app.use('/api/attendance',  require('./routes/attendance.routes'));
 app.use('/api/notifications', require('./routes/notification.routes'));
 app.use('/api/superadmin', require('./routes/superadmin.routes'));
+app.use('/api/homework', require('./routes/homework.routes'));
 
 // Health check
 app.get('/', (req, res) => {

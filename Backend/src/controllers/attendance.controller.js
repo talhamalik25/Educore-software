@@ -2,6 +2,7 @@ const Attendance = require('../models/attendance.model');
 const Student = require('../models/student.model');
 const Notification = require('../models/notification.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+const sendSMS = require('../utils/sendSMS');
 
 // @desc    Mark attendance for a student
 // @route   POST /api/attendance
@@ -75,8 +76,10 @@ const markBulkAttendance = async (req, res) => {
                     ? `Attendance alert: ${s?.name || 'Student'} marked absent on ${date}.`
                     : `Attendance alert: ${s?.name || 'Student'} marked late on ${date}.`;
 
-                // eslint-disable-next-line no-console
-                console.log(`[SMS-STUB] ${type} → ${parentPhone || 'N/A'}: ${message}`);
+                // Send actual SMS
+                if (parentPhone) {
+                    sendSMS(parentPhone, message);
+                }
 
                 return {
                     schoolId: req.user.schoolId,
@@ -84,7 +87,7 @@ const markBulkAttendance = async (req, res) => {
                     parentPhone,
                     type,
                     message,
-                    status: 'pending',
+                    status: 'sent',
                 };
             });
 

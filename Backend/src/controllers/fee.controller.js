@@ -2,6 +2,7 @@ const Fee = require('../models/fee.model');
 const Student = require('../models/student.model');
 const Notification = require('../models/notification.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+const sendSMS = require('../utils/sendSMS');
 
 // @desc    Create fee record for a student
 // @route   POST /api/fees
@@ -64,7 +65,7 @@ const markFeePaid = async (req, res) => {
             { _id: req.params.id, schoolId: req.user.schoolId },
             {
                 status: 'paid',
-                paidDate: new Date(),
+                paidAt: new Date(),
                 paymentMethod,
                 transactionId,
                 collectedBy: req.user._id,
@@ -86,8 +87,10 @@ const markFeePaid = async (req, res) => {
             const parentPhone = student.parentPhone;
             const message = `Fee received: PKR ${fee.amount} for ${student.name} (${fee.month}).`;
 
-            // eslint-disable-next-line no-console
-            console.log(`[SMS-STUB] fee_received → ${parentPhone || 'N/A'}: ${message}`);
+            // Send actual SMS
+            if (parentPhone) {
+                sendSMS(parentPhone, message);
+            }
 
             await Notification.create({
                 schoolId: req.user.schoolId,
@@ -95,7 +98,7 @@ const markFeePaid = async (req, res) => {
                 parentPhone,
                 type: 'fee_received',
                 message,
-                status: 'pending',
+                status: 'sent',
             });
         }
 
