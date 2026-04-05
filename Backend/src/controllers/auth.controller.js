@@ -1,6 +1,6 @@
 const User = require('../models/user.model');
 const School = require('../models/school.model');
-const generateToken = require('../utils/generateToken');
+const jwt = require('jsonwebtoken');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 // @desc    Register first admin for a school
@@ -31,10 +31,19 @@ const register = async (req, res) => {
             role: 'admin',
         });
 
-        const token = generateToken(user._id);
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+            expiresIn: '7d'
+        });
+
+        const refreshToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: '30d'
+        });
+        user.refreshToken = refreshToken;
+        await user.save();
 
         return sendSuccess(res, 201, 'Registration successful', {
             token,
+            refreshToken,
             user: {
                 _id: user._id,
                 name: user.name,
@@ -75,10 +84,19 @@ const login = async (req, res) => {
             return sendError(res, 401, 'Your account has been deactivated.');
         }
 
-        const token = generateToken(user._id);
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+            expiresIn: '7d'
+        });
+
+        const refreshToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: '30d'
+        });
+        user.refreshToken = refreshToken;
+        await user.save();
 
         return sendSuccess(res, 200, 'Login successful', {
             token,
+            refreshToken,
             user: {
                 _id: user._id,
                 name: user.name,
@@ -157,10 +175,20 @@ const registerSchool = async (req, res) => {
         });
 
         console.log('✅ Registration successful:', user.email);
-        const token = generateToken(user._id);
+        
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+            expiresIn: '7d'
+        });
+
+        const refreshToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: '30d'
+        });
+        user.refreshToken = refreshToken;
+        await user.save();
 
         return sendSuccess(res, 201, 'School registered successfully', {
             token,
+            refreshToken,
             user: {
                 _id: user._id,
                 name: user.name,
@@ -192,4 +220,33 @@ const getMe = async (req, res) => {
     }
 };
 
-module.exports = { register, login, registerSchool, getMe };
+// @desc    Refresh access token
+// @route   POST /api/auth/refresh
+// @access  Public
+const refresh = async (req, res) => {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'No refresh token' });
+    }
+
+    try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+        
+        if (!user || user.refreshToken !== refreshToken) {
+            return res.status(403).json({ message: 'Invalid refresh token' });
+        }
+
+        const newToken = jwt.sign(
+            { id: user._id, role: user.role }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '7d' }
+        );
+
+        res.json({ token: newToken });
+    } catch (err) {
+        return res.status(403).json({ message: 'Refresh token expired or invalid, please login again' });
+    }
+};
+
+module.exports = { register, login, registerSchool, getMe, refresh };
