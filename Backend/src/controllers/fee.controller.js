@@ -141,4 +141,28 @@ const getFeeSummary = async (req, res) => {
     }
 };
 
-module.exports = { createFee, getFees, markFeePaid, getFeeSummary };
+
+// @desc    Auto-mark overdue fees (run on server startup + daily)
+// @route   called internally (no route needed)
+const markOverdueFees = async () => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const result = await Fee.updateMany(
+            {
+                status: 'unpaid',
+                dueDate: { $lt: today },
+            },
+            { $set: { status: 'overdue' } }
+        );
+
+        if (result.modifiedCount > 0) {
+            console.log(`✅ Marked ${result.modifiedCount} fees as overdue.`);
+        }
+    } catch (error) {
+        console.error('❌ Overdue fee job failed:', error.message);
+    }
+};
+
+module.exports = { createFee, getFees, markFeePaid, getFeeSummary, markOverdueFees };

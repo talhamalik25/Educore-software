@@ -1,7 +1,9 @@
 const User = require('../models/user.model');
 const School = require('../models/school.model');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+const sendEmail = require('../utils/sendEmail');
 
 // @desc    Register first admin for a school
 // @route   POST /api/auth/register
@@ -220,6 +222,18 @@ const getMe = async (req, res) => {
     }
 };
 
+// @desc    Logout - clear refresh token from DB
+// @route   POST /api/auth/logout
+// @access  Private
+const logout = async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(req.user._id, { refreshToken: null });
+        return sendSuccess(res, 200, 'Logged out successfully');
+    } catch (error) {
+        return sendError(res, 500, error.message);
+    }
+};
+
 // @desc    Refresh access token
 // @route   POST /api/auth/refresh
 // @access  Public
@@ -243,10 +257,97 @@ const refresh = async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        res.json({ token: newToken });
+        return sendSuccess(res, 200, 'Token refreshed', { token: newToken });
     } catch (err) {
         return res.status(403).json({ message: 'Refresh token expired or invalid, please login again' });
     }
 };
 
-module.exports = { register, login, registerSchool, getMe, refresh };
+// @desc    Forgot password - send reset email
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return sendError(res, 400, 'Please provide your email.');
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            // Don't reveal if email exists or not
+            return sendSuccess(res, 200, 'If this email exists, a reset link has been sent.');
+        }
+
+        // Generate reset token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+        user.passwordResetToken = hashedToken;
+        user.passwordResetExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 min
+        await user.save();
+
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0B1F1E; color: white; padding: 40px; border-radius: 16px;">
+                <h2 style="color: #00A896; margin-bottom: 8px;">EduCore</h2>
+                <p style="color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Password Reset Request</p>
+                <hr style="border-color: #1a2e2d; margin: 24px 0;">
+                <p style="font-size: 16px;">Hello <strong>${user.name}</strong>,</p>
+                <p style="color: #aaa;">You requested a password reset. Click the button below to set a new password. This link will expire in <strong>30 minutes</strong>.</p>
+                <div style="text-align: center; margin: 40px 0;">
+                    <a href="${resetUrl}" style="background: #00A896; color: white; padding: 16px 40px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 14px; letter-spacing: 1px; text-transform: uppercase;">
+                        Reset My Password
+                    </a>
+                </div>
+                <p style="color: #555; font-size: 12px;">If you didn't request this, please ignore this email. Your password will remain unchanged.</p>
+                <hr style="border-color: #1a2e2d; margin: 24px 0;">
+                <p style="color: #333; font-size: 11px;">EduCore — AI-Powered School Management System</p>
+            </div>
+        `;
+
+        await sendEmail(user.email, 'Reset Your EduCore Password', html);
+
+        return sendSuccess(res, 200, 'If this email exists, a reset link has been sent.');
+    } catch (error) {
+        return sendError(res, 500, error.message);
+    }
+};
+
+// @desc    Reset password using token
+// @route   POST /api/auth/reset-password/:token
+// @access  Public
+const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        if (!password || password.length < 6) {
+            return sendError(res, 400, 'Password must be at least 6 characters.');
+        }
+
+        // Hash the token to compare with DB
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        const user = await User.findOne({
+            passwordResetToken: hashedToken,
+            passwordResetExpires: { $gt: new Date() },
+        }).select('+password');
+
+        if (!user) {
+            return sendError(res, 400, 'Reset link is invalid or has expired.');
+        }
+
+        // Set new password
+        user.password = password;
+        user.passwordResetToken = null;
+        user.passwordResetExpires = null;
+        user.refreshToken = null; // force re-login on all devices
+        await user.save();
+
+        return sendSuccess(res, 200, 'Password reset successful. Please login with your new password.');
+    } catch (error) {
+        return sendError(res, 500, error.message);
+    }
+};
+
+module.exports = { register, login, registerSchool, getMe, refresh, logout, forgotPassword, resetPassword };

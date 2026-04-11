@@ -1,11 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const { markOverdueFees } = require('./controllers/fee.controller');
 
 const app = express();
 
 // Connect to MongoDB
 connectDB();
+
+// Run overdue check on startup
+markOverdueFees();
+
+// Run every 24 hours
+setInterval(markOverdueFees, 24 * 60 * 60 * 1000);
 
 // Middleware
 app.use(cors({

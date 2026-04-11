@@ -1,37 +1,36 @@
-// Single source of truth for all plan features
 const PLAN_FEATURES = {
     starter: {
         maxStudents: 200,
-        features: [
-            'fee_management',
-            'attendance_basic',
-            'parent_portal',
-        ],
+        maxTeachers: 5,
+        maxSmsPerMonth: 0,
+        homeworkEnabled: true,
+        attendanceEnabled: true,
+        feeManagementEnabled: true,
+        parentPortalEnabled: true,
+        reportsEnabled: false,
+        customBrandingEnabled: false,
     },
     growth: {
         maxStudents: 600,
-        features: [
-            'fee_management',
-            'attendance_basic',
-            'attendance_qr',
-            'parent_portal',
-            'sms_alerts',
-            'reports_basic',
-        ],
+        maxTeachers: 20,
+        maxSmsPerMonth: 500,
+        homeworkEnabled: true,
+        attendanceEnabled: true,
+        feeManagementEnabled: true,
+        parentPortalEnabled: true,
+        reportsEnabled: true,
+        customBrandingEnabled: false,
     },
-    pro: {
+    enterprise: {
         maxStudents: Infinity,
-        features: [
-            'fee_management',
-            'attendance_basic',
-            'attendance_qr',
-            'parent_portal',
-            'sms_alerts',
-            'reports_basic',
-            'reports_advanced',
-            'custom_branding',
-            'api_access',
-        ],
+        maxTeachers: Infinity,
+        maxSmsPerMonth: Infinity,
+        homeworkEnabled: true,
+        attendanceEnabled: true,
+        feeManagementEnabled: true,
+        parentPortalEnabled: true,
+        reportsEnabled: true,
+        customBrandingEnabled: true,
     },
 };
 

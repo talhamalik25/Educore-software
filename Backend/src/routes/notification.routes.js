@@ -3,12 +3,12 @@ const router = express.Router();
 
 const protect = require('../middleware/protect');
 const requireRole = require('../middleware/requireRole');
-const checkFeature = require('../middleware/checkFeature');
+const { checkLimit } = require('../middleware/checkFeature');
 
 const { getNotifications, createNotification } = require('../controllers/notification.controller');
 
 router.get('/', protect, requireRole('admin', 'superadmin'), getNotifications);
-router.post('/', protect, requireRole('admin', 'superadmin', 'teacher'), checkFeature('sms_alerts'), createNotification);
+router.post('/', protect, requireRole('admin', 'superadmin', 'teacher'), createNotification);
 
 module.exports = router;
 

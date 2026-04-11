@@ -9,6 +9,27 @@ const createUser = async (req, res) => {
     try {
         const { name, email, password, phone, role } = req.body;
 
+        // Check teacher limit for this school's plan
+        if (role === 'teacher') {
+            const School = require('../models/school.model');
+            const PLAN_FEATURES = require('../config/planFeatures');
+            
+            const school = await School.findById(req.user.schoolId);
+            const plan = PLAN_FEATURES[school?.plan];
+            
+            if (plan && plan.maxTeachers !== Infinity) {
+                const teacherCount = await User.countDocuments({
+                    schoolId: req.user.schoolId,
+                    role: 'teacher',
+                    isActive: true
+                });
+                
+                if (teacherCount >= plan.maxTeachers) {
+                    return sendError(res, 403, `Teacher limit (${plan.maxTeachers}) reached for your ${school.plan} plan. Please upgrade to add more teachers.`);
+                }
+            }
+        }
+
         const existingUser = await User.findOne({ email, schoolId: req.user.schoolId });
         if (existingUser) {
             return sendError(res, 400, 'User with this email already exists in this school.');

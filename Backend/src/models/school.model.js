@@ -22,7 +22,7 @@ const schoolSchema = new mongoose.Schema({
     },
     plan: {
         type: String,
-        enum: ['starter', 'growth', 'pro'],
+        enum: ['starter', 'growth', 'enterprise'],
         default: 'starter',
     },
     isFoundingMember: {

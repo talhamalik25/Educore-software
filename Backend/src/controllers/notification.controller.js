@@ -1,4 +1,6 @@
 const Notification = require('../models/notification.model');
+const School = require('../models/school.model');
+const PLAN_FEATURES = require('../config/planFeatures');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const sendSMS = require('../utils/sendSMS');
 
@@ -22,7 +24,37 @@ const getNotifications = async (req, res) => {
 // @access  Admin, Teacher
 const createNotification = async (req, res) => {
     try {
-        const { studentId, parentPhone, type, message, status } = req.body;
+        const { studentId, parentPhone, type, message } = req.body;
+
+        // Check SMS limit for this school's plan
+        const school = await School.findById(req.user.schoolId);
+        const plan = PLAN_FEATURES[school?.plan];
+        
+        if (plan && plan.maxSmsPerMonth !== Infinity) {
+            // Count SMS sent this month
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+            
+            const smsThisMonth = await Notification.countDocuments({
+                schoolId: req.user.schoolId,
+                status: 'sent',
+                createdAt: { $gte: startOfMonth }
+            });
+            
+            if (smsThisMonth >= plan.maxSmsPerMonth) {
+                // Save notification record but skip actual SMS
+                const notification = await Notification.create({
+                    schoolId: req.user.schoolId,
+                    studentId,
+                    parentPhone,
+                    type,
+                    message,
+                    status: 'skipped_limit',
+                });
+                return sendSuccess(res, 201, `SMS quota reached for ${school.plan} plan. Notification logged but SMS not sent.`, { notification });
+            }
+        }
 
         const notification = await Notification.create({
             schoolId: req.user.schoolId,

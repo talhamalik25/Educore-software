@@ -24,7 +24,7 @@ const notificationSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['sent', 'failed', 'pending'],
+        enum: ['sent', 'failed', 'pending', 'skipped_limit'],
         default: 'pending',
     },
 }, { timestamps: true });
