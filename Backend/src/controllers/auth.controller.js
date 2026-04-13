@@ -86,6 +86,13 @@ const login = async (req, res) => {
             return sendError(res, 401, 'Your account has been deactivated.');
         }
 
+        // ROLE MISMATCH CHECK
+        if (req.body.role && req.body.role !== user.role) {
+            return res.status(403).json({
+                message: `This account is not registered as ${req.body.role}. Please select the correct role.`
+            });
+        }
+
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
             expiresIn: '7d'
         });
@@ -104,7 +111,7 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                schoolId: user.schoolId,
+                schoolId: user.schoolId || null,
             },
         });
 

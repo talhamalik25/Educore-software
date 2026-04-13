@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
-        required: true,
+        required: false,
     },
     name: {
         type: String,
@@ -25,8 +25,8 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['superadmin', 'admin', 'teacher', 'parent'],
-        default: 'teacher',
+        enum: ['admin', 'teacher', 'parent', 'superadmin'],
+        required: [true, 'Role is required'],
     },
     phone: {
         type: String,
