@@ -40,6 +40,7 @@ app.use('/api/notifications', require('./routes/notification.routes'));
 app.use('/api/superadmin', require('./routes/superadmin.routes'));
 app.use('/api/homework', require('./routes/homework.routes'));
 app.use('/api/timetable', require('./routes/timetable.routes'));
+app.use('/api/results', require('./routes/result.routes'));
 
 // Health check
 app.get('/', (req, res) => {
