@@ -11,7 +11,10 @@
     "install:all": "npm install",
     "dev:backend": "npm run dev --workspace=Backend",
     "dev:frontend": "npm run dev --workspace=Frontend",
-    "dev": "npm run dev --workspaces --if-present",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "seed": "npm run seed --workspace=Backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

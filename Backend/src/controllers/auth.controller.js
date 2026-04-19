@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const sendEmail = require('../utils/sendEmail');
+const admin = require('../config/firebaseAdmin');
 
 // @desc    Register first admin for a school
 // @route   POST /api/auth/register
@@ -357,4 +358,69 @@ const resetPassword = async (req, res) => {
     }
 };
 
-module.exports = { register, login, registerSchool, getMe, refresh, logout, forgotPassword, resetPassword };
+// @desc    Google OAuth login via Firebase token 
+// @route   POST /api/auth/google 
+// @access  Public 
+const googleLogin = async (req, res) => { 
+    try { 
+        const { idToken } = req.body; 
+        if (!idToken) return sendError(res, 400, 'Firebase ID token is required.'); 
+
+        if (!admin.apps.length) {
+            return sendError(res, 500, 'Firebase Admin is not configured on the server.');
+        }
+ 
+        // Verify token with Firebase Admin 
+        const decoded = await admin.auth().verifyIdToken(idToken); 
+        const { email, name, uid } = decoded; 
+ 
+        if (!email) return sendError(res, 400, 'Google account has no email.'); 
+ 
+        // Check if user exists 
+        let user = await User.findOne({ email }); 
+ 
+        if (!user) { 
+            return sendError(res, 403, 'No EduCore account found for this Google email. Please contact your school admin.'); 
+        } 
+ 
+        if (!user.isActive) { 
+            return sendError(res, 401, 'Your account has been deactivated.'); 
+        } 
+ 
+        // Issue tokens 
+        const token = jwt.sign( 
+            { id: user._id, role: user.role, schoolId: user.schoolId }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '7d' } 
+        ); 
+ 
+        const refreshToken = jwt.sign( 
+            { id: user._id }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '30d' } 
+        ); 
+ 
+        user.refreshToken = refreshToken; 
+        await user.save(); 
+ 
+        return sendSuccess(res, 200, 'Google login successful', { 
+            token, 
+            refreshToken, 
+            user: { 
+                _id: user._id, 
+                name: user.name, 
+                email: user.email, 
+                role: user.role, 
+                schoolId: user.schoolId, 
+            }, 
+        }); 
+ 
+    } catch (error) { 
+        if (error.code === 'auth/id-token-expired') { 
+            return sendError(res, 401, 'Google session expired. Please try again.'); 
+        } 
+        return sendError(res, 500, error.message); 
+    } 
+}; 
+
+module.exports = { register, login, registerSchool, getMe, refresh, logout, forgotPassword, resetPassword, googleLogin };

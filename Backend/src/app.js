@@ -43,6 +43,7 @@ app.use('/api/timetable', require('./routes/timetable.routes'));
 app.use('/api/results', require('./routes/result.routes'));
 app.use('/api/complaints', require('./routes/complaint.routes'));
 app.use('/api/ai', require('./routes/aiAnalyzer.routes'));
+app.use('/api/report-card', require('./routes/reportCard.routes'));
 
 // Health check
 app.get('/', (req, res) => {

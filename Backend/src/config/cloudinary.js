@@ -21,4 +21,16 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-module.exports = { cloudinary, upload };
+// Storage for logos
+const logoStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'educore/logos',
+        allowed_formats: ['jpg', 'png', 'jpeg'],
+        resource_type: 'image',
+    },
+});
+
+const uploadLogo = multer({ storage: logoStorage });
+
+module.exports = { cloudinary, upload, uploadLogo };

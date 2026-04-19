@@ -33,6 +33,30 @@ const schoolSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    logoUrl: {
+        type: String,
+        default: null,
+    },
+    logoPublicId: {
+        type: String,
+        default: null,
+    },
+    principalName: {
+        type: String,
+        default: '',
+    },
+    website: {
+        type: String,
+        default: '',
+    },
+    city: {
+        type: String,
+        default: '',
+    },
+    motto: {
+        type: String,
+        default: '',
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('School', schoolSchema);
