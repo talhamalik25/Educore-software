@@ -152,10 +152,36 @@ const getSchoolStats = async (req, res) => {
     }
 };
 
+const sendAnnouncementToSchool = async (req, res) => {
+    try {
+        const { schoolId, title, message, targetRoles } = req.body;
+        const Notification = require('../models/notification.model');
+        
+        let filter = { role: { $in: targetRoles }, isActive: true };
+        if (schoolId !== 'all') filter.schoolId = schoolId;
+        
+        const users = await User.find(filter);
+        
+        await Promise.all(users.map(u => 
+            Notification.create({
+                schoolId: u.schoolId,
+                type: 'custom',
+                message: `${title}: ${message}`,
+                status: 'sent',
+            }).catch(() => {})
+        ));
+
+        return sendSuccess(res, 200, 'Announcement sent', { sent: users.length });
+    } catch (error) {
+        return sendError(res, 500, error.message);
+    }
+};
+
 module.exports = {
     getAllSchools,
     createSchoolWithAdmin,
     updateSchool,
     toggleSchoolStatus,
-    getSchoolStats
+    getSchoolStats,
+    sendAnnouncementToSchool
 };

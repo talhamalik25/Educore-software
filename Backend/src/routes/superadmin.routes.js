@@ -8,6 +8,7 @@ const {
     updateSchool,
     toggleSchoolStatus,
     getSchoolStats,
+    sendAnnouncementToSchool,
 } = require('../controllers/superadmin.controller');
 
 // All routes require superadmin role
@@ -18,5 +19,6 @@ router.post('/schools', createSchoolWithAdmin);
 router.put('/schools/:id', updateSchool);
 router.patch('/schools/:id/toggle', toggleSchoolStatus);
 router.get('/stats', getSchoolStats);
+router.post('/announcements', sendAnnouncementToSchool);
 
 module.exports = router;
