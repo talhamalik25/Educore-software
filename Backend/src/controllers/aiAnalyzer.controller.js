@@ -54,6 +54,9 @@ const parseAiJson = (text) => {
 // @route   POST /api/ai/analyze/:studentId
 // @access  Admin, Teacher
 const analyzeStudent = async (req, res) => {
+    if (!openai) {
+      return sendError(res, 503, 'AI service not configured. Please set OPENAI_API_KEY in .env');
+    }
     try {
         const { studentId } = req.params;
 
