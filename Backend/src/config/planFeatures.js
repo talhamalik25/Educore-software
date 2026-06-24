@@ -9,6 +9,10 @@ const PLAN_FEATURES = {
         parentPortalEnabled: true,
         reportsEnabled: false,
         customBrandingEnabled: false,
+        admissionsEnabled: true,
+        eventsEnabled: true,
+        staffLeaveEnabled: false,
+        staffAttendanceEnabled: false,
     },
     growth: {
         maxStudents: 600,
@@ -20,6 +24,10 @@ const PLAN_FEATURES = {
         parentPortalEnabled: true,
         reportsEnabled: true,
         customBrandingEnabled: false,
+        admissionsEnabled: true,
+        eventsEnabled: true,
+        staffLeaveEnabled: true,
+        staffAttendanceEnabled: true,
     },
     enterprise: {
         maxStudents: Infinity,
@@ -31,6 +39,10 @@ const PLAN_FEATURES = {
         parentPortalEnabled: true,
         reportsEnabled: true,
         customBrandingEnabled: true,
+        admissionsEnabled: true,
+        eventsEnabled: true,
+        staffLeaveEnabled: true,
+        staffAttendanceEnabled: true,
     },
 };
 

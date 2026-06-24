@@ -165,4 +165,33 @@ const markOverdueFees = async () => {
     }
 };
 
-module.exports = { createFee, getFees, markFeePaid, getFeeSummary, markOverdueFees };
+// @desc    Get fees for parent's children
+// @route   GET /api/fees/my-child
+// @access  Parent
+const getMyChildFees = async (req, res) => {
+    try {
+        // Find all students where parentId matches or parentPhone matches user's phone
+        const students = await Student.find({
+            schoolId: req.user.schoolId,
+            $or: [
+                { parentId: req.user._id },
+                { parentPhone: req.user.phone }
+            ]
+        });
+
+        const studentIds = students.map(s => s._id);
+
+        const fees = await Fee.find({
+            schoolId: req.user.schoolId,
+            studentId: { $in: studentIds }
+        })
+        .populate('studentId', 'name rollNumber class section')
+        .sort({ dueDate: -1 });
+
+        return sendSuccess(res, 200, 'Child fees fetched', { fees });
+    } catch (error) {
+        return sendError(res, 500, error.message);
+    }
+};
+
+module.exports = { createFee, getFees, markFeePaid, getFeeSummary, markOverdueFees, getMyChildFees };

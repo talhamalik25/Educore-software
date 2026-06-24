@@ -129,3 +129,29 @@ exports.deleteInvoice = async (req, res) => {
         sendError(res, 500, error.message);
     }
 };
+exports.getMyChildInvoices = async (req, res) => {
+    try {
+        const { schoolId } = req.user;
+        
+        const students = await Student.find({
+            schoolId,
+            $or: [
+                { parentId: req.user._id },
+                { parentPhone: req.user.phone }
+            ]
+        });
+
+        const studentIds = students.map(s => s._id);
+
+        const invoices = await Invoice.find({
+            schoolId,
+            studentId: { $in: studentIds }
+        })
+        .populate('studentId', 'name rollNumber class section')
+        .sort({ issuedDate: -1 });
+
+        sendSuccess(res, 200, 'Child invoices fetched successfully', invoices);
+    } catch (error) {
+        sendError(res, 500, error.message);
+    }
+};

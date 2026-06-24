@@ -47,6 +47,10 @@ app.use('/api/report-card', require('./routes/reportCard.routes'));
 app.use('/api/analytics', require('./routes/analytics.routes'));
 app.use('/api/invoices', require('./routes/invoice.routes'));
 app.use('/api/api-keys', require('./routes/apiKey.routes'));
+app.use('/api/admissions', require('./routes/admission.routes'));
+app.use('/api/events', require('./routes/event.routes'));
+app.use('/api/staff-leaves', require('./routes/staffLeave.routes'));
+app.use('/api/staff-attendance', require('./routes/staffAttendance.routes'));
 
 // Health check
 app.get('/', (req, res) => {
